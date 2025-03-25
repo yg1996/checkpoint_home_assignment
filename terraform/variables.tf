@@ -1,7 +1,7 @@
 variable "prefix" {
   description = "Prefix for resource names"
   type        = string
-  default     = "demo"
+  default     = "demo1"
 }
 
 variable "aws_region" {
