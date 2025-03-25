@@ -40,4 +40,5 @@ resource "aws_ssm_parameter" "api_token" {
   name  = "/microservices/token"
   type  = "SecureString"
   value = "your-secret-token"
+  overwrite = true
 }
