@@ -7,7 +7,7 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# Use existing public subnets (both AZs)
+# Use all public subnets in the default VPC
 data "aws_subnets" "default" {
   filter {
     name   = "vpc-id"
@@ -15,30 +15,27 @@ data "aws_subnets" "default" {
   }
 }
 
-# ECS Cluster
+# ECS Cluster with a fixed name using the prefix variable
 resource "aws_ecs_cluster" "main" {
-  name = "microservices-cluster"
+  name = "${var.prefix}-microservices-cluster"
 }
 
-# S3 Bucket
-resource "random_id" "bucket_suffix" {
-  byte_length = 4
-}
-
+# S3 Bucket (the bucket name must be globally unique;
+# adjust the prefix or add your own unique suffix if needed)
 resource "aws_s3_bucket" "microservices_data" {
-  bucket        = "microservices-${random_id.bucket_suffix.hex}"
+  bucket        = "${var.prefix}-microservices-data"
   force_destroy = true
 }
 
-# SQS Queue
+# SQS Queue with a predictable name
 resource "aws_sqs_queue" "microservices_queue" {
-  name = "microservices-queue"
+  name = "${var.prefix}-microservices-queue"
 }
 
-# SSM Parameter for token
+# SSM Parameter for token storage
 resource "aws_ssm_parameter" "api_token" {
-  name  = "/microservices/token"
-  type  = "SecureString"
-  value = "your-secret-token"
+  name      = "/${var.prefix}/token"
+  type      = "SecureString"
+  value     = "your-secret-token"
   overwrite = true
 }

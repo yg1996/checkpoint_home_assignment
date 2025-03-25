@@ -1,31 +1,65 @@
 ############################################
-# Data lookups (optional if you have ECR)
+# Creating new ECR repositories
 ############################################
-
-# If you have ECR repos for microservice1 and microservice2:
-data "aws_ecr_repository" "microservice1" {
-  name = "microservice1"
+resource "aws_ecr_repository" "microservice1" {
+  name                 = "${var.prefix}-microservice1"
+  image_tag_mutability = "MUTABLE"
+  
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 }
 
-data "aws_ecr_repository" "microservice2" {
-  name = "microservice2"
+resource "aws_ecr_repository" "microservice2" {
+  name                 = "${var.prefix}-microservice2"
+  image_tag_mutability = "MUTABLE"
+  
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+
+
+############################################
+# Security Group for the ALB
+############################################
+resource "aws_security_group" "alb_sg" {
+  name        = "${var.prefix}-alb-sg"
+  description = "Allow inbound HTTP traffic"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    description = "Allow inbound HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 ############################################
 # Security Group for ECS Tasks
 ############################################
 resource "aws_security_group" "ecs_tasks_sg" {
-  name        = "ecs-tasks-sg"
+  name        = "${var.prefix}-ecs-tasks-sg"
   description = "Allow ECS tasks to communicate"
   vpc_id      = data.aws_vpc.default.id
 
-  # For Microservice 1 to accept traffic from ALB:
+  # Allow traffic from the ALB on port 5000
   ingress {
-    description      = "Allow traffic from ALB on port 5000"
-    from_port        = 5000
-    to_port          = 5000
-    protocol         = "tcp"
-    security_groups  = [aws_security_group.alb_sg.id] # reference the ALB's SG
+    description     = "Allow traffic from ALB on port 5000"
+    from_port       = 5000
+    to_port         = 5000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
   }
 
   egress {
@@ -37,45 +71,21 @@ resource "aws_security_group" "ecs_tasks_sg" {
 }
 
 ############################################
-# Security Group for the ALB
-############################################
-resource "aws_security_group" "alb_sg" {
-  name        = "alb-sg"
-  description = "Allow HTTP inbound"
-  vpc_id      = data.aws_vpc.default.id
-
-  ingress {
-    description  = "Allow inbound HTTP"
-    from_port    = 80
-    to_port      = 80
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-############################################
-# ALB + Target Group + Listener
+# Application Load Balancer, Target Group, and Listener
 ############################################
 resource "aws_lb" "microservices_alb" {
-  name               = "microservices-alb"
+  name               = "${var.prefix}-alb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = data.aws_subnets.default.ids
 }
 
 resource "aws_lb_target_group" "microservice1_tg" {
-  name        = "microservice1-tg"
+  name        = "${var.prefix}-microservice1-tg"
   port        = 5000
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
-  target_type = "ip"  # for Fargate
+  target_type = "ip"  # For Fargate tasks
   health_check {
     path = "/submit"
     port = "traffic-port"
@@ -88,7 +98,7 @@ resource "aws_lb_listener" "microservices_http_listener" {
   protocol          = "HTTP"
 
   default_action {
-    type = "forward"
+    type             = "forward"
     target_group_arn = aws_lb_target_group.microservice1_tg.arn
   }
 }
@@ -97,7 +107,7 @@ resource "aws_lb_listener" "microservices_http_listener" {
 # ECS Task Definition for Microservice 1
 ############################################
 resource "aws_ecs_task_definition" "microservice1_taskdef" {
-  family                   = "microservice1"
+  family                   = "${var.prefix}-microservice1"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 256
@@ -108,11 +118,11 @@ resource "aws_ecs_task_definition" "microservice1_taskdef" {
   container_definitions = jsonencode([
     {
       name  = "microservice1"
-      image = "${data.aws_ecr_repository.microservice1.repository_url}:latest"
+      image = "${aws_ecr_repository.microservice1.repository_url}:latest"
       portMappings = [
         {
-          containerPort = 5000
-          hostPort      = 5000
+          containerPort = 5000,
+          hostPort      = 5000,
           protocol      = "tcp"
         }
       ]
@@ -131,10 +141,10 @@ resource "aws_ecs_task_definition" "microservice1_taskdef" {
         }
       ]
       logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = "/ecs/microservice1"
-          "awslogs-region"        = var.aws_region
+        logDriver = "awslogs",
+        options   = {
+          "awslogs-group"         = "/ecs/microservice1",
+          "awslogs-region"        = var.aws_region,
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -146,15 +156,15 @@ resource "aws_ecs_task_definition" "microservice1_taskdef" {
 # ECS Service for Microservice 1
 ############################################
 resource "aws_ecs_service" "microservice1_service" {
-  name            = "microservice1-service"
+  name            = "${var.prefix}-microservice1-service"
   cluster         = aws_ecs_cluster.main.id
   launch_type     = "FARGATE"
   desired_count   = 1
-  platform_version = "1.4.0"  # or latest
+  platform_version = "1.4.0"
 
   network_configuration {
-    subnets          = data.aws_subnets.default.ids
-    security_groups  = [aws_security_group.ecs_tasks_sg.id]
+    subnets         = data.aws_subnets.default.ids
+    security_groups = [aws_security_group.ecs_tasks_sg.id]
     assign_public_ip = true
   }
 
@@ -175,7 +185,7 @@ resource "aws_ecs_service" "microservice1_service" {
 # ECS Task Definition for Microservice 2
 ############################################
 resource "aws_ecs_task_definition" "microservice2_taskdef" {
-  family                   = "microservice2"
+  family                   = "${var.prefix}-microservice2"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 256
@@ -186,9 +196,7 @@ resource "aws_ecs_task_definition" "microservice2_taskdef" {
   container_definitions = jsonencode([
     {
       name  = "microservice2"
-      image = "${data.aws_ecr_repository.microservice2.repository_url}:latest"
-      # No portMappings needed if it's just a worker
-
+      image = "${aws_ecr_repository.microservice2.repository_url}:latest"
       environment = [
         {
           name  = "SQS_QUEUE_URL"
@@ -204,14 +212,14 @@ resource "aws_ecs_task_definition" "microservice2_taskdef" {
         },
         {
           name  = "POLL_INTERVAL"
-          value = "10"  # adjust as needed
+          value = "10"
         }
       ]
       logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = "/ecs/microservice2"
-          "awslogs-region"        = var.aws_region
+        logDriver = "awslogs",
+        options   = {
+          "awslogs-group"         = "/ecs/microservice2",
+          "awslogs-region"        = var.aws_region,
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -223,15 +231,15 @@ resource "aws_ecs_task_definition" "microservice2_taskdef" {
 # ECS Service for Microservice 2
 ############################################
 resource "aws_ecs_service" "microservice2_service" {
-  name            = "microservice2-service"
+  name            = "${var.prefix}-microservice2-service"
   cluster         = aws_ecs_cluster.main.id
   launch_type     = "FARGATE"
   desired_count   = 1
-  platform_version = "1.4.0"  # or latest
+  platform_version = "1.4.0"
 
   network_configuration {
-    subnets          = data.aws_subnets.default.ids
-    security_groups  = [aws_security_group.ecs_tasks_sg.id]
+    subnets         = data.aws_subnets.default.ids
+    security_groups = [aws_security_group.ecs_tasks_sg.id]
     assign_public_ip = true
   }
 
