@@ -50,10 +50,13 @@ jobs:
         with:
           terraform_version: 1.3.0 
 
+      # - name: Terraform init
+      #   working-directory: ./terraform
+      #   run: terraform init
+
+      # - name: Terraform apply
+      #   working-directory: ./terraform
+      #   run: terraform apply -auto-approve
       - name: Terraform init
         working-directory: ./terraform
-        run: terraform init
-
-      - name: Terraform apply
-        working-directory: ./terraform
-        run: terraform apply -auto-approve
+        run: terraform destroy -auto-approve
