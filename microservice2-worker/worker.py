@@ -4,8 +4,8 @@ import time
 import uuid
 import json
 
-sqs = boto3.client("sqs", region_name=os.getenv("AWS_REGION", "us-west-1"))
-s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION", "us-west-1"))
+sqs = boto3.client("sqs", region_name=os.getenv("AWS_REGION", "us-east-1"))
+s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION", "us-east-1"))
 
 SQS_QUEUE_URL = os.environ["SQS_QUEUE_URL"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]

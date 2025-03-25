@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 ##
 app = Flask(__name__)
 
-AWS_REGION = os.getenv("AWS_REGION", "us-west-1")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 ssm = boto3.client("ssm", region_name=AWS_REGION)
 sqs = boto3.client("sqs", region_name=AWS_REGION)
 
@@ -20,6 +20,10 @@ def get_token():
     except ClientError as e:
         print(f"SSM error: {e}")
         return None
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"}), 200
 
 @app.route("/submit", methods=["POST"])
 def submit():

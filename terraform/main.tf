@@ -15,6 +15,17 @@ data "aws_subnets" "default" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "microservice1" {
+  name              = "/ecs/microservice1"
+  retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "microservice2" {
+  name              = "/ecs/microservice2"
+  retention_in_days = 7
+}
+
+
 # ECS Cluster with a fixed name using the prefix variable
 resource "aws_ecs_cluster" "main" {
   name = "${var.prefix}-microservices-cluster"
