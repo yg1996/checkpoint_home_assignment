@@ -25,7 +25,7 @@ resource "aws_ecr_repository" "microservice2" {
 resource "aws_security_group" "alb_sg" {
   name        = "${var.prefix}-alb-sg"
   description = "Allow inbound HTTP traffic"
-  vpc_id      = var.vpc_id
+  vpc_id      = data.aws_vpc.default.id
 
   ingress {
     description = "Allow inbound HTTP"
@@ -49,7 +49,7 @@ resource "aws_security_group" "alb_sg" {
 resource "aws_security_group" "ecs_tasks_sg" {
   name        = "${var.prefix}-ecs-tasks-sg"
   description = "Allow ECS tasks to communicate"
-  vpc_id      = var.vpc_id
+  vpc_id      = data.aws_vpc.default.id
 
   # Allow traffic from the ALB on port 5000
   ingress {
@@ -75,14 +75,14 @@ resource "aws_lb" "microservices_alb" {
   name               = "${var.prefix}-alb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets            = var.subnet_ids
+  subnets            = data.aws_subnets.default.ids
 }
 
 resource "aws_lb_target_group" "microservice1_tg" {
   name        = "${var.prefix}-microservice1-tg"
   port        = 5000
   protocol    = "HTTP"
-  vpc_id      = var.vpc_id
+  vpc_id      = data.aws_vpc.default.id
   target_type = "ip"  # For Fargate tasks
   health_check {
     path = "/submit"
@@ -161,7 +161,7 @@ resource "aws_ecs_service" "microservice1_service" {
   platform_version = "1.4.0"
 
   network_configuration {
-    subnets         = var.subnet_ids
+    subnets         = data.aws_subnets.default.ids
     security_groups = [aws_security_group.ecs_tasks_sg.id]
     assign_public_ip = true
   }
@@ -236,7 +236,7 @@ resource "aws_ecs_service" "microservice2_service" {
   platform_version = "1.4.0"
 
   network_configuration {
-    subnets         = var.subnet_ids
+    subnets         = data.aws_subnets.default.ids
     security_groups = [aws_security_group.ecs_tasks_sg.id]
     assign_public_ip = true
   }

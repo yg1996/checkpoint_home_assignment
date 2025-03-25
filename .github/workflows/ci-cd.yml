@@ -11,9 +11,7 @@ jobs:
     env:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      TF_VAR_vpc_id: ${{ secrets.AWS_VPC_ID }}
-      TF_VAR_subnet_ids: ${{ secrets.AWS_SUBNET_IDS }}  # This should be a JSON-formatted list, e.g., '["subnet-xxxxxxx","subnet-yyyyyyy"]'
-      TF_VAR_prefix: "demo"  # Change this if needed
+      TF_VAR_prefix: "demo"        # Change this if needed
       TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
 
     steps:
