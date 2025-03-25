@@ -2,7 +2,9 @@ name: CI-CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - app-dev
   pull_request:
 
 jobs:
@@ -30,12 +32,14 @@ jobs:
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
       - name: Build & push microservice1
+        if: github.ref == 'refs/heads/app-dev'
         run: |
           docker build -t microservice1:latest ./microservice1-api
           docker tag microservice1:latest docker.io/${{ secrets.DOCKERHUB_USERNAME }}/microservice1:latest
           docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/microservice1:latest
 
       - name: Build & push microservice2
+        if: github.ref == 'refs/heads/app-dev'
         run: |
           docker build -t microservice2:latest ./microservice2-worker
           docker tag microservice2:latest docker.io/${{ secrets.DOCKERHUB_USERNAME }}/microservice2:latest
