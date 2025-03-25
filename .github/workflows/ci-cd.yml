@@ -40,6 +40,11 @@ jobs:
         docker build -t microservice2:latest ./microservice2-worker
         docker tag microservice2:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/microservice2:latest
         docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/microservice2:latest
+    
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.3.0 
 
     - name: Terraform init
       working-directory: ./terraform
