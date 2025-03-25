@@ -1,23 +1,6 @@
 ############################################
-# Creating new ECR repositories
+# (Removed ECR repository creation)
 ############################################
-resource "aws_ecr_repository" "microservice1" {
-  name                 = "${var.prefix}-microservice1"
-  image_tag_mutability = "MUTABLE"
-  
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-}
-
-resource "aws_ecr_repository" "microservice2" {
-  name                 = "${var.prefix}-microservice2"
-  image_tag_mutability = "MUTABLE"
-  
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-}
 
 ############################################
 # Security Group for the ALB
@@ -51,7 +34,6 @@ resource "aws_security_group" "ecs_tasks_sg" {
   description = "Allow ECS tasks to communicate"
   vpc_id      = data.aws_vpc.default.id
 
-  # Allow traffic from the ALB on port 5000
   ingress {
     description     = "Allow traffic from ALB on port 5000"
     from_port       = 5000
@@ -83,7 +65,7 @@ resource "aws_lb_target_group" "microservice1_tg" {
   port        = 5000
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
-  target_type = "ip"  # For Fargate tasks
+  target_type = "ip"
   health_check {
     path = "/submit"
     port = "traffic-port"
@@ -116,7 +98,7 @@ resource "aws_ecs_task_definition" "microservice1_taskdef" {
   container_definitions = jsonencode([
     {
       name  = "microservice1"
-      image = "${aws_ecr_repository.microservice1.repository_url}:latest"
+      image = "docker.io/yonatangolick/microservice1:latest"
       portMappings = [
         {
           containerPort = 5000,
@@ -125,18 +107,9 @@ resource "aws_ecs_task_definition" "microservice1_taskdef" {
         }
       ]
       environment = [
-        {
-          name  = "SQS_QUEUE_URL"
-          value = aws_sqs_queue.microservices_queue.id
-        },
-        {
-          name  = "TOKEN_PARAM_NAME"
-          value = aws_ssm_parameter.api_token.name
-        },
-        {
-          name  = "AWS_REGION"
-          value = var.aws_region
-        }
+        { name = "SQS_QUEUE_URL", value = aws_sqs_queue.microservices_queue.id },
+        { name = "TOKEN_PARAM_NAME", value = aws_ssm_parameter.api_token.name },
+        { name = "AWS_REGION", value = var.aws_region }
       ]
       logConfiguration = {
         logDriver = "awslogs",
@@ -174,9 +147,7 @@ resource "aws_ecs_service" "microservice1_service" {
 
   task_definition = aws_ecs_task_definition.microservice1_taskdef.arn
 
-  depends_on = [
-    aws_lb_listener.microservices_http_listener
-  ]
+  depends_on = [ aws_lb_listener.microservices_http_listener ]
 }
 
 ############################################
@@ -194,24 +165,12 @@ resource "aws_ecs_task_definition" "microservice2_taskdef" {
   container_definitions = jsonencode([
     {
       name  = "microservice2"
-      image = "${aws_ecr_repository.microservice2.repository_url}:latest"
+      image = "docker.io/yonatangolick/microservice2:latest"
       environment = [
-        {
-          name  = "SQS_QUEUE_URL"
-          value = aws_sqs_queue.microservices_queue.id
-        },
-        {
-          name  = "S3_BUCKET_NAME"
-          value = aws_s3_bucket.microservices_data.bucket
-        },
-        {
-          name  = "AWS_REGION"
-          value = var.aws_region
-        },
-        {
-          name  = "POLL_INTERVAL"
-          value = "10"
-        }
+        { name = "SQS_QUEUE_URL", value = aws_sqs_queue.microservices_queue.id },
+        { name = "S3_BUCKET_NAME", value = aws_s3_bucket.microservices_data.bucket },
+        { name = "AWS_REGION", value = var.aws_region },
+        { name = "POLL_INTERVAL", value = "10" }
       ]
       logConfiguration = {
         logDriver = "awslogs",
