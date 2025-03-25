@@ -2,18 +2,8 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Use default VPC
-data "aws_vpc" "default" {
-  default = true
-}
-
-# Use all public subnets in the default VPC
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
+# The vpc_id and subnet_ids are provided via environment variables (e.g., TF_VAR_vpc_id, TF_VAR_subnet_ids)
+# Therefore, no data lookup for default VPC is used.
 
 # ECS Cluster with a fixed name using the prefix variable
 resource "aws_ecs_cluster" "main" {
