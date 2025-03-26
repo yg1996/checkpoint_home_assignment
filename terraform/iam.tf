@@ -2,7 +2,7 @@
 # IAM Role for ECS Task (Application Role)
 ############################################
 resource "aws_iam_role" "ecs_task_role" {
-  name = "${var.prefix}-ecsTaskRole"
+  name = "${random_string.prefix.result}-ecsTaskRole"
 
   assume_role_policy = jsonencode({
     Version   = "2012-10-17",
@@ -17,7 +17,7 @@ resource "aws_iam_role" "ecs_task_role" {
 }
 
 resource "aws_iam_role_policy" "ecs_task_policy" {
-  name = "${var.prefix}-ecsTaskPolicy"
+  name = "${random_string.prefix.result}-ecsTaskPolicy"
   role = aws_iam_role.ecs_task_role.id
 
   policy = jsonencode({
@@ -28,7 +28,8 @@ resource "aws_iam_role_policy" "ecs_task_policy" {
         Action   = [
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage",
-          "sqs:GetQueueAttributes"
+          "sqs:GetQueueAttributes",
+          "sqs:SendMessage" 
         ],
         Resource = aws_sqs_queue.microservices_queue.arn
       },
@@ -50,7 +51,7 @@ resource "aws_iam_role_policy" "ecs_task_policy" {
 # IAM Role for ECS Task Execution
 ############################################
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${var.prefix}-ecsTaskExecutionRole"
+  name = "${random_string.prefix.result}-ecsTaskExecutionRole"
 
   assume_role_policy = jsonencode({
     Version   = "2012-10-17",

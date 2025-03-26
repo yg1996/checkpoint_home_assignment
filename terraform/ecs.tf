@@ -1,17 +1,13 @@
 ############################################
-# (Removed ECR repository creation)
-############################################
-
-############################################
 # Security Group for the ALB
 ############################################
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.prefix}-alb-sg"
+  name        = "${random_string.prefix.result}-alb-sg"
   description = "Allow inbound HTTP traffic"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    description = "Allow inbound HTTP"
+    description = "Allow inbound HTTP on port 80"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -30,7 +26,7 @@ resource "aws_security_group" "alb_sg" {
 # Security Group for ECS Tasks
 ############################################
 resource "aws_security_group" "ecs_tasks_sg" {
-  name        = "${var.prefix}-ecs-tasks-sg"
+  name        = "${random_string.prefix.result}-ecs-tasks-sg"
   description = "Allow ECS tasks to communicate"
   vpc_id      = data.aws_vpc.default.id
 
@@ -54,21 +50,27 @@ resource "aws_security_group" "ecs_tasks_sg" {
 # Application Load Balancer, Target Group, and Listener
 ############################################
 resource "aws_lb" "microservices_alb" {
-  name               = "${var.prefix}-alb"
+  name               = "${random_string.prefix.result}-alb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = data.aws_subnets.default.ids
 }
 
 resource "aws_lb_target_group" "microservice1_tg" {
-  name        = "${var.prefix}-microservice1-tg"
+  name        = "${random_string.prefix.result}-microservice1-tg"
   port        = 5000
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
   health_check {
-    path = "/submit"
-    port = "traffic-port"
+    path                = "/health"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    matcher             = "200-299"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
   }
 }
 
@@ -87,7 +89,7 @@ resource "aws_lb_listener" "microservices_http_listener" {
 # ECS Task Definition for Microservice 1
 ############################################
 resource "aws_ecs_task_definition" "microservice1_taskdef" {
-  family                   = "${var.prefix}-microservice1"
+  family                   = "${random_string.prefix.result}-microservice1"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 256
@@ -98,7 +100,7 @@ resource "aws_ecs_task_definition" "microservice1_taskdef" {
   container_definitions = jsonencode([
     {
       name  = "microservice1"
-      image = "docker.io/yonatangolick/microservice1:latest"
+      image = "docker.io/${var.dockerhub_username}/microservice1:latest"
       portMappings = [
         {
           containerPort = 5000,
@@ -127,7 +129,7 @@ resource "aws_ecs_task_definition" "microservice1_taskdef" {
 # ECS Service for Microservice 1
 ############################################
 resource "aws_ecs_service" "microservice1_service" {
-  name             = "${var.prefix}-microservice1-service"
+  name             = "${random_string.prefix.result}-microservice1-service"
   cluster          = aws_ecs_cluster.main.id
   launch_type      = "FARGATE"
   desired_count    = 1
@@ -154,7 +156,7 @@ resource "aws_ecs_service" "microservice1_service" {
 # ECS Task Definition for Microservice 2
 ############################################
 resource "aws_ecs_task_definition" "microservice2_taskdef" {
-  family                   = "${var.prefix}-microservice2"
+  family                   = "${random_string.prefix.result}-microservice2"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 256
@@ -165,7 +167,7 @@ resource "aws_ecs_task_definition" "microservice2_taskdef" {
   container_definitions = jsonencode([
     {
       name  = "microservice2"
-      image = "docker.io/yonatangolick/microservice2:latest"
+      image = "docker.io/${var.dockerhub_username}/microservice2:latest"
       environment = [
         { name = "SQS_QUEUE_URL", value = aws_sqs_queue.microservices_queue.id },
         { name = "S3_BUCKET_NAME", value = aws_s3_bucket.microservices_data.bucket },
@@ -188,7 +190,7 @@ resource "aws_ecs_task_definition" "microservice2_taskdef" {
 # ECS Service for Microservice 2
 ############################################
 resource "aws_ecs_service" "microservice2_service" {
-  name             = "${var.prefix}-microservice2-service"
+  name             = "${random_string.prefix.result}-microservice2-service"
   cluster          = aws_ecs_cluster.main.id
   launch_type      = "FARGATE"
   desired_count    = 1

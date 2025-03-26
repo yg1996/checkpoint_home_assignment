@@ -2,6 +2,13 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Generate a random prefix (10 lowercase alphanumeric characters)
+resource "random_string" "prefix" {
+  length  = 10
+  special = false
+  upper   = false
+}
+
 # Lookup the default VPC
 data "aws_vpc" "default" {
   default = true
@@ -25,27 +32,25 @@ resource "aws_cloudwatch_log_group" "microservice2" {
   retention_in_days = 7
 }
 
-
-# ECS Cluster with a fixed name using the prefix variable
+# ECS Cluster with a fixed name using the random prefix
 resource "aws_ecs_cluster" "main" {
-  name = "${var.prefix}-microservices-cluster"
+  name = "${random_string.prefix.result}-microservices-cluster"
 }
 
 # S3 Bucket (the bucket name must be globally unique; adjust if needed)
 resource "aws_s3_bucket" "microservices_data" {
-  bucket        = "${var.prefix}-microservices-data"
+  bucket        = "${random_string.prefix.result}-microservices-data"
   force_destroy = true
 }
 
 # SQS Queue with a predictable name
 resource "aws_sqs_queue" "microservices_queue" {
-  name = "${var.prefix}-microservices-queue"
+  name = "${random_string.prefix.result}-microservices-queue"
 }
 
 # SSM Parameter for token storage
 resource "aws_ssm_parameter" "api_token" {
-  name      = "/${var.prefix}/token"
+  name      = "/${random_string.prefix.result}/token"
   type      = "SecureString"
   value     = "your-secret-token"
-  overwrite = true
 }
