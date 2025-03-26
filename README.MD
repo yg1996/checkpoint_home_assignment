@@ -128,6 +128,15 @@ curl -v http://<ALB_DNS_NAME>/health
 ```
 Again, replace <ALB_DNS_NAME> with the real DNS name provided in the CI/CD output.
 
+**Check S3 for New Messages:**
+
+After submitting a request, verify that a new file appears in the messages folder in your S3 bucket. For example, run the following AWS CLI command (ensure you have AWS CLI configured locally):
+```bash
+aws s3 ls s3://<S3_BUCKET_NAME>/messages/
+```
+Replace <S3_BUCKET_NAME> with the actual name from your deployment output.
+
+This will list the files in the "messages" folder, allowing you to confirm that the microservice successfully uploaded the data.
 
 ## Contact 📧
 For questions or suggestions, please contact: yg19967@gmail.com.
