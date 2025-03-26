@@ -7,4 +7,5 @@ variable "aws_region" {
 variable "dockerhub_username" {
   description = "Docker Hub username for building image names"
   type        = string
+  default     = "yonatangolick"
 }
