@@ -1,6 +1,6 @@
-# Project Title
+# Project Title 🚀
 
-## Description
+## Description ℹ️
 This project implements a system of two Docker microservices deployed on AWS ECS. The system integrates with AWS services such as an S3 bucket, an Elastic Load Balancer, and SQS. The infrastructure is fully defined using Terraform, and CI/CD processes are automated using GitHub Actions.
 
 The assignment demonstrates:
@@ -9,7 +9,7 @@ The assignment demonstrates:
 - Infrastructure provisioning and configuration through Terraform.
 - CI/CD automation for building, testing, and deploying Docker images.
 
-## Project Structure
+## Project Structure 📁
 - **microservice1_api**  
   - Contains the REST API that listens for HTTP requests, validates tokens from SSM Parameter Store, and publishes payloads to an SQS queue.
   - Files: `app.py`, `Dockerfile`, `requirements.txt`
@@ -25,14 +25,14 @@ The assignment demonstrates:
 - **README.MD**  
   - This documentation file.
 
-## Requirements
+## Requirements ✅
 - AWS services: ECS, S3, SQS, ALB, SSM
 - Python 3.x
 - Docker
 - Terraform
 - CI/CD: GitHub Actions
 
-## Prerequisites
+## Prerequisites 🔑
 
 Before running the CI/CD pipeline via GitHub Actions, make sure you have the following GitHub repository secrets configured:
 
@@ -43,7 +43,7 @@ Before running the CI/CD pipeline via GitHub Actions, make sure you have the fol
 - **DOCKERHUB_USERNAME**: Your Docker Hub username.
 - **DOCKERHUB_TOKEN**: Your Docker Hub access token.
 
-## Installation and Setup
+## Installation and Setup 🛠️
 1. **Clone the Repository:**
     ```bash
     git clone https://github.com/yg1996/checkpoint_home_assignment.git
@@ -81,33 +81,29 @@ Before running the CI/CD pipeline via GitHub Actions, make sure you have the fol
       ```bash
       terraform apply -auto-approve
       ```
-    - Note: Ensure that your AWS credentials and region are properly configured either locally or via your CI/CD pipeline.
+    - **Note:** Ensure that your AWS credentials and region are properly configured either locally or via your CI/CD pipeline.
 
 5. **Docker and CI/CD:**
     - The CI/CD process is managed via GitHub Actions. The pipeline includes jobs to:
         - Build and push Docker images for both microservices.
         - Deploy the updated infrastructure via Terraform.
-    - If you want to test locally, you can build the Docker images using:
+    - To test locally, you can build the Docker images using:
       ```bash
       docker build -t microservice1:latest ./microservice1_api
       docker build -t microservice2:latest ./microservice2_worker
       ```
 
-## Usage
+## Usage 📡
 
 - **For Microservice 1 (REST API):**
-    - This service listens on a designated port behind the ELB. It validates incoming tokens by comparing the request token with the token stored in AWS SSM Parameter Store and checks for date validity before publishing payload data to the SQS queue.
-    - Deploy and reach this API via the ELB URL provided by the AWS deployment.
+    - This service listens on a designated port behind the ELB.
+    - It validates incoming tokens by comparing the request token with the token stored in AWS SSM Parameter Store and checks for date validity before publishing payload data to the SQS queue.
+    - Once deployed, access this API via the ELB URL provided in your CI/CD output.
 
 - **For Microservice 2 (SQS Worker):**
     - This service periodically polls the SQS queue for new messages and uploads them to a specific path in the S3 bucket.
     - The pull interval can be configured as needed.
 
-## CI/CD Pipeline
-The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) handles:
-- Code checkout and AWS credential configuration.
-- Docker image build and push for both microservices.
-- Infrastructure deployment with Terraform.
+## Testing the Deployment 🔍
 
-## Contact
-For questions or suggestions, please contact yg19967@gmail.com.
+After deployment, the GitHub Actions job output will display the following details:
