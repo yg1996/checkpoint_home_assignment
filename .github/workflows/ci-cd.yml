@@ -32,13 +32,13 @@ jobs:
 
       - name: Build & push microservice1
         run: |
-          docker build -t microservice1:latest ./microservice1-api
+          docker build -t microservice1:latest ./microservice1_api
           docker tag microservice1:latest docker.io/${{ secrets.DOCKERHUB_USERNAME }}/microservice1:latest
           docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/microservice1:latest
 
       - name: Build & push microservice2
         run: |
-          docker build -t microservice2:latest ./microservice2-worker
+          docker build -t microservice2:latest ./microservice2_worker
           docker tag microservice2:latest docker.io/${{ secrets.DOCKERHUB_USERNAME }}/microservice2:latest
           docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/microservice2:latest
 
